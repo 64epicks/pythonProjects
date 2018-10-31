@@ -35,33 +35,35 @@ class Network:
                 for k in xrange(0, n, batch_size)]
 
                 for batch in batches:
-                    self.learn(batch, lr)
-                
+                    self.updateParameters(batch, lr)
                 if test_data:
                     print "Epoch {0}: {1} / {2}".format(
                         e, self.evaluate(test_data), n_test)
                 else:
                     print "Epoch {0} complete".format(e)
-    def learn(self, batch, lr):
-        weightDerivative = [[[0 for i in range(self.sizes[d - 1])] for t in range(self.sizes[d])] for d in range(self.num_layers)[1:]]
-        biasDerivative = [[0 for i in range(self.sizes[t])] for t in range(self.num_layers)[1:]]
+
+    def updateParameters(self, batch, lr):
+        self.biases1d = np.array([[bias] for i in self.biases for bias in i])
+        self.weights1d = np.array([[weight] for i in self.weights for weight in i])
+
+        weightDerivative = [np.zeros(w.shape) for w in self.weights1d]
+        biasDerivative = [np.zeros(b.shape) for b in self.biases1d]
 
         for x,y in batch:
-            delta_biasDerivative,delta_weightDerivative = self.backprop(x, y)
+            delta_biasDerivative, delta_weightDerivative = self.backprop(x, y)
 
-            #Gradient decent
-            biasDerivative = [[nnb + ndnb for nnb, ndnb in zip(nb, dnb)] for nb, dnb in zip(biasDerivative, delta_biasDerivative)]
-            weightDerivative = [[[rnnw + rndnw for rnnw,rndnw in zip(nnw, ndnw)]for nnw,ndnw in zip(nw, dnw)]for nw, dnw in zip(weightDerivative, delta_weightDerivative)]
-            self.weights = self.weights - (lr/len(batch)) * weightDerivative
-            self.biases = self.biases - (lr/len(batch)) * biasDerivative
-
+            biasDerivative = [nb+dnb for nb, dnb in zip(biasDerivative, delta_biasDerivative)]
+            weightDerivative = [nw+dnw for nw, dnw in zip(weightDerivative, delta_weightDerivative)]
+            self.weights1d = [w-(lr/len(batch))*nw for w, nw in zip(self.weights1d, weightDerivative)]
+            self.biases1d = [b-(lr/len(batch))*nb for b, nb in zip(self.biases1d, biasDerivative)]
+    
     def backprop(self, x, y):
-        der_b = [[0 for i in range(self.sizes[t])] for t in range(self.num_layers)[1:]]
-        der_w = [[[0 for i in range(self.sizes[d - 1])] for t in range(self.sizes[d])] for d in range(self.num_layers)[1:]]
+        der_b = [0 for b in self.biases1d]
+        der_w = [0 for w in self.weights1d]
 
         # feedforward
-        activations = np.array(self.feedforward(x.transpose()[0]))
-        zs = np.array(self.feedforwardZ(x.transpose()[0]))
+        activations = self.feedforward(x.transpose()[0])[-1]
+        zs = self.feedforwardZ(x.transpose()[0])[-1]
 
         # Backpropagate
         delta = self.cost_derivative(activations[-1], y) * \
@@ -69,21 +71,23 @@ class Network:
         der_b[-1] = delta
         der_w[-1] = np.dot(delta, np.array(activations[-2]).transpose())
 
-        for l in xrange(2, self.num_layers):
+        for l in xrange(3, self.num_layers):
             z = zs[-l]
             sp = self.sigmoid_derivative(z)
-            delta = np.dot(self.weights[-l+1].transpose(), delta) * sp
+            delta = np.dot(np.array(self.weights1d[-l+1][0]).transpose(), delta) * sp
             der_b[-l] = delta
             der_w[-l] = np.dot(delta, activations[-l-1].transpose())
         return (der_b, der_w)
-
+    
     def evaluate(self, test_data):
-        test_results = [(np.argmax(self.feedforward(x)[-1]), y) for (x, y) in test_data]
+        test_results = [(np.argmax(self.feedforward(x)[-1]), y)
+                        for (x, y) in test_data]
         return sum(int(x == y) for (x, y) in test_results)
+
     #Tools (math functions etc)
     def sigmoid(self, x):
         return 1.0 / (1 + np.exp(-x))
     def cost_derivative(self, output_activations, y):
         return (output_activations-y)
     def sigmoid_derivative(self, z):
-        return [self.sigmoid(z[i])*(1-self.sigmoid(z[i])) for i in xrange(len(z))]
+        return self.sigmoid(z)*(1-self.sigmoid(z))
