@@ -1,10 +1,14 @@
 import numpy as np
 import random
-from abc import ABC, abstractmethod
+import turtle
 
 class SnakeGame(object):
   def __init__(self, boardSize, ticksPerSecond):
-    self.boardSize = boardSize
+    self.drawsize = 660
+    self.go = False
+    self.boardSizeInt = boardSize
+    boardSize = [boardSize, boardSize]
+    self.boardSize = [boardSize, boardSize]
     self.board = [[0 for i in range(boardSize[0])] for t in range(boardSize[1])]
     self.board[boardSize[0] / 2 - 1][boardSize[1] / 2 - 1] = 1
     lvValid = False
@@ -12,6 +16,7 @@ class SnakeGame(object):
       self.lvPos = np.random.randint(0, boardSize[0] - 1, 2)
       if self.lvPos[0] != boardSize[0] / 2 - 1 and self.lvPos[1] != boardSize[0] / 2 - 1:
         lvValid = True
+    self.board[self.lvPos[0]][self.lvPos[1]] = 2
     self.vel = [0, 1]
     self.pos = [[boardSize[0] / 2 - 1, boardSize[1] / 2 - 1]]
     self.ticksPerSecond = ticksPerSecond
@@ -41,12 +46,52 @@ class SnakeGame(object):
         lvValid = False
         while lvValid == False:
             self.lvPos = np.random.randint(0, self.boardSize[0] - 1, 2)
-            # FIX THIS IF STATEMENT
-            if self.lvPos[0] != boardSize[0] / 2 - 1 and self.lvPos[1] != boardSize[0] / 2 - 1:
-                lvValid = True
+            lvValid = True
+            for part in self.pos:
+              if(self.lvPos == part):
+                lvValid = False
 
     #Write snake and lvPos to board
     self.board = [[0 for i in range(self.boardSize[0])] for t in range(self.boardSize[1])]
     for i in self.pos:
-        if i[0] >= 0 or i[0] < self.boardSize[0] or i[1] >= 0 or i[1] < self.boardSize[1]
+        if i[0] >= 0 or i[0] < self.boardSize[0] or i[1] >= 0 or i[1] < self.boardSize[1]:
             self.board[i[0]][i[1]] = 1
+    self.board[self.lvPos[0]][self.lvPos[1]] = 2
+
+  def draw(self, pen):
+    sqareDiameter = self.drawsize / self.boardSizeInt
+    pen.penup()
+    for boardLine in range(len(self.board)):
+      for boardColumn in range(len(self.board[boardLine])):
+        pen.goto(sqareDiameter * boardColumn, self.drawsize - sqareDiameter * boardLine)
+        
+        pen.pendown()
+        pen.begin_fill()
+        for i in range(4):
+          pen.forward(sqareDiameter)
+          pen.left(90)
+        pen.up()
+        pen.end_fill() 
+
+game = SnakeGame(20, 1)
+for i in game.board:
+  print(i)
+while game.go == False:
+  key = raw_input()
+  if key == "u":
+    game.step([0, 1])
+  elif key == "d":
+    game.step([0, -1])
+  elif key == "l":
+    game.step([-1, 0])
+  elif key == "r":
+    game.step([1, 0])
+  for i in game.board:
+    print(i)
+print("Game over")
+  
+# draw = turtle.Turtle()
+# draw.speed('fastest')
+# draw.hideturtle()
+# game.draw(draw)
+# turtle.mainloop()

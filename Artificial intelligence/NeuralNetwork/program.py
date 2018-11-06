@@ -16,4 +16,5 @@ training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
 
 import network as nw
 nn = nw.Network([784, 30, 10])
-nn.train(training_data, 1, 10, 3.0, test_data=test_data)
+nn.train(training_data, 5, 10, 3.0, test_data=test_data)
+nn.train(training_data, 10, 10, 0.01, test_data=test_data)
