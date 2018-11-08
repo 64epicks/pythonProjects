@@ -13,7 +13,7 @@ class Optimizer(object):
         self.retain = retain
         self.random_select = random_select
         self.mutate_chance = mutate_chance
-        self.snakeSize = 15
+        self.snakeSize = 5
     def createGeneration(self, length):
         networks = []
         for i in range(length):
@@ -24,6 +24,7 @@ class Optimizer(object):
             self.layers.append(self.lastLayerLength)
             net = nn.Network(self.layers)
             networks.append(net)
+        print(networks[-1].sizes)
         return networks
     def fitness(self, network):
         g = game.SnakeGame(self.snakeSize, 1)
@@ -34,12 +35,24 @@ class Optimizer(object):
                 prevLength = len(g.pos)
             a = [t for i in g.board for t in i]
             activations = network.feedforward(a)
-
-            x = activations[0]
-            y = activations[1]
+            x = activations[-1][0]
+            y = activations[-1][1]
             
+            if (x < 0.5 and y < 0.5 and x >= y) or (x < 0.5 and y >= 0.5 and x >= (y - 0.5)):
+                step = [-1, 0]
+            elif (x >= 0.5 and y >= 0.5 and x >= y) or (x >= 0.5 and y < 0.5 and x >= (y + 0.5)):
+                step = [1, 0]
+            elif (y < 0.5 and x < 0.5 and y > x) or (y < 0.5 and x >= 0.5 and y > (x - 0.5)):
+                step = [0, -1] 
+            else:
+                step = [0, 1]
+            
+            g.step(step)
+
             if totalSteps > 0:
                 if prevLength == len(g.pos):
-                    steps = -1
-            steps = steps + 1
+                    steps = steps + 1
+                if len(g.pos) > prevLength:
+                    steps = 0
             totalSteps = totalSteps + 1
+        return len(g.pos)

@@ -16,7 +16,7 @@ class SnakeGame(object):
       self.lvPos = np.random.randint(0, boardSize[0] - 1, 2)
       if self.lvPos[0] != boardSize[0] / 2 - 1 and self.lvPos[1] != boardSize[0] / 2 - 1:
         lvValid = True
-    self.board[self.lvPos[0]][self.lvPos[1]] = 2
+    self.board[self.lvPos[0]][self.lvPos[1]] = 0.5
     self.vel = [0, 1]
     self.pos = [[boardSize[0] / 2 - 1, boardSize[1] / 2 - 1]]
     self.ticksPerSecond = ticksPerSecond
@@ -65,7 +65,7 @@ class SnakeGame(object):
         if i[0] >= 0 or i[0] < self.boardSize[0] or i[1] >= 0 or i[1] < self.boardSize[1]:
           self.board[i[0]][i[1]] = 1
 
-    self.board[self.lvPos[0]][self.lvPos[1]] = 2
+    self.board[self.lvPos[0]][self.lvPos[1]] = 0.5
 
 
 
